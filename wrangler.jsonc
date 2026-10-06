@@ -1,6 +1,6 @@
 {
-  // A static site: Cloudflare serves the built files in dist/. There is no worker script.
+  // Static-assets-only Worker: `npm run build`, then `npx wrangler deploy`.
   "name": "game-music",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" }
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
 }
