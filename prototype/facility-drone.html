@@ -1,0 +1,300 @@
+<title>Facility Drone Study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap">
+<style>
+/* Layout: one control desk. Transport and the current chord on top, three faders beneath, the chord log last. */
+:root{
+  --bg:#0e1516; --panel:#162022; --line:#2a3a3c; --fg:#dfe7e2; --dim:#8fa29d;
+  --jade:#7fb8a0; --amber:#e3a857; --warn:#d9705a;
+  --sans:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--sans);padding-inline:16px;padding-block:28px 48px}
+main{max-width:760px;margin-inline:auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:1.7rem;font-weight:600;margin:0;text-wrap:balance;letter-spacing:.01em}
+p{margin:0;color:var(--dim);max-width:65ch}
+.label{font:500 .72rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.desk{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+button{font:600 1rem var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--bg);background:var(--jade);border:0;border-radius:3px;padding:12px 26px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--amber)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.now{display:flex;flex-direction:column;gap:6px;min-width:0}
+#chord{font:500 2.2rem/1 var(--mono);color:var(--jade);font-variant-numeric:tabular-nums}
+#move{font:.85rem var(--mono);color:var(--dim)}
+.faders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.fader{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fader span.val{font:.8rem var(--mono);color:var(--amber);font-variant-numeric:tabular-nums}
+.fader .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+input[type=range]{width:100%;accent-color:var(--jade)}
+input[type=text]{font:1rem var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:8px 10px;width:100%;box-sizing:border-box}
+.hint{font-size:.85rem;color:var(--dim)}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font:.85rem var(--mono);color:var(--dim)}
+ol li:first-child{color:var(--fg)}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.92rem}
+dt{font:500 .8rem var(--mono);color:var(--amber)} dd{margin:0;color:var(--dim)}
+h2{font-size:1rem;font-weight:600;margin:0;letter-spacing:.04em}
+section{display:flex;flex-direction:column;gap:10px}
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="label">Room Explorer · sound study</span>
+    <h1>Facility Drone Study</h1>
+    <p>Slow pad chords made in the browser, with no sound files. Press Start, wait half a minute, then move Unease. Headphones help; the low drone is lost on small speakers.</p>
+  </header>
+
+  <div class="desk">
+    <div class="top">
+      <div class="now">
+        <span class="label">Sounding now</span>
+        <span id="chord">silent</span>
+        <span id="move">press Start</span>
+        <span id="blend" class="label" style="letter-spacing:.06em;text-transform:none"></span>
+      </div>
+      <button id="go" aria-pressed="false">Start</button>
+    </div>
+    <div class="faders">
+      <label class="fader" for="unease"><span class="row"><span class="label">Unease</span><span class="val" id="uneaseV">0.60</span></span>
+        <input id="unease" type="range" min="0" max="1" step="0.01" value="0.6">
+        <span class="hint">Low: related chords, calm. High: chords with no key in common, and now and then a clashing extra note.</span></label>
+      <label class="fader" for="colour"><span class="row"><span class="label">Colour</span><span class="val" id="colourV">0.80</span></span>
+        <input id="colour" type="range" min="0" max="1" step="0.01" value="0.8">
+        <span class="hint">How often a chord is dressed: add9, sus2, sus4, major 7, minor 7, dominant 7. At 0 every chord is a plain triad.</span></label>
+      <label class="fader" for="drift"><span class="row"><span class="label">Drift</span><span class="val" id="driftV">0.70</span></span>
+        <input id="drift" type="range" min="0" max="1" step="0.01" value="0.7">
+        <span class="hint">How far the synth itself wanders: slow filter sweeps on each voice, changing tone, detune, position and echo.</span></label>
+      <label class="fader" for="depth"><span class="row"><span class="label">Depth</span><span class="val" id="depthV">0.40</span></span>
+        <input id="depth" type="range" min="0" max="1" step="0.01" value="0.4">
+        <span class="hint">How far down the facility you are: lower pitch, darker tone, more air noise.</span></label>
+      <label class="fader" for="density"><span class="row"><span class="label">Bells</span><span class="val" id="densityV">0.50</span></span>
+        <input id="density" type="range" min="0" max="1" step="0.01" value="0.5">
+        <span class="hint">How often the three slow loops strike a high note.</span></label>
+      <label class="fader" for="arp"><span class="row"><span class="label">Arpeggio</span><span class="val" id="arpV">0.50</span></span>
+        <input id="arp" type="range" min="0" max="1" step="0.01" value="0.5">
+        <span class="hint">How often a short run of notes drifts in. At 0 never; at 1 about every 20 seconds.</span></label>
+      <label class="fader" for="heart"><span class="row"><span class="label">Heartbeat</span><span class="val" id="heartV">0.50</span></span>
+        <input id="heart" type="range" min="0" max="1" step="0.01" value="0.5">
+        <span class="hint">Level of the double kick. At 0 it is off.</span></label>
+      <label class="fader" for="pulse"><span class="row"><span class="label">Pulse</span><span class="val" id="pulseV">54 bpm</span></span>
+        <input id="pulse" type="range" min="36" max="120" step="1" value="54">
+        <span class="hint">Beats a minute. 50 to 60 is a resting heart; above 90 reads as fear.</span></label>
+      <label class="fader" for="seed"><span class="row"><span class="label">Seed</span><span class="val">per facility</span></span>
+        <input id="seed" type="text" value="heavy-industry" autocomplete="off" spellcheck="false">
+        <span class="hint">Same seed, same music. Change it and press Start again.</span></label>
+    </div>
+  </div>
+
+  <section>
+    <h2>Chord log</h2>
+    <ol id="log"><li>Nothing played yet.</li></ol>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <dl>
+      <dt>Chords</dt><dd>Each chord is a major or minor triad. The next one is reached by moving one or two notes by a semitone or tone, so every change is smooth, but at high Unease the moves chosen lead to chords that share no key (C major to A♭ minor is the classic film-score "something is wrong" change).</dd>
+      <dt>Colour</dt><dd>Each chord may be dressed with an added ninth or a seventh, or have its third replaced by a second or a fourth (sus2, sus4). A sus chord is neither major nor minor, which suits a place you cannot read.</dd>
+      <dt>Voices</dt><dd>Five voices never stop. Each slides to its nearest note in the new chord a few seconds apart, so the old and new chords overlap.</dd>
+      <dt>Waveforms</dt><dd>Each voice has six layers: a pair of saws (bright), a triangle (soft), a square (hollow), a glassy wave made only of odd partials, a reedy wave with a nasal peak, and a sine an octave up (air). Drift chooses which one or two lead in each voice; the line under the chord name shows the five voices' current blends.</dd>
+      <dt>Drift</dt><dd>Each voice has its own filter, swept by a slow wave with a period between 47 and 131 seconds, all different, so the voices open and close out of step. Every 9 seconds or so one voice is also given a new blend of waveforms, a new detune, a new place in the stereo field and a new filter edge, and glides there over about 20 seconds.</dd>
+      <dt>Drone</dt><dd>Two low sine waves a fraction of a tone apart, which makes a slow beat. It stays on a note the old and new chords share whenever it can.</dd>
+      <dt>Bells</dt><dd>Three loops of 17.3, 23.7 and 31.1 seconds. Their lengths never line up, so the pattern does not repeat.</dd>
+      <dt>Arpeggio</dt><dd>Now and again a short plucked run climbs through the notes of the chord sounding at that moment, in time with the heartbeat (three or four notes to a beat), fading in and out and trailing an echo. The first one comes within about 15 seconds; after that the wait is random, set by the slider.</dd>
+      <dt>Heartbeat</dt><dd>The only thing here with a tempo. Two low thumps, the second softer and about a third of a beat later, each a sine wave whose pitch falls quickly from about 95 to 42 cycles a second. The gap between beats wanders by a few percent, as a real pulse does. The chords and bells still ignore it.</dd>
+      <dt>Room</dt><dd>One long echo made from decaying noise. In the game its length would come from each room's size.</dd>
+    </dl>
+  </section>
+</main>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+// Triad transformations: [label, plain description, major -> (root shift, becomes minor), minor -> (root shift, becomes minor)]
+const MOVES={
+ R:['relative','shares two notes; same key',[9,true],[3,false]],
+ L:['leading note','shares two notes; one slips a semitone',[4,true],[8,false]],
+ P:['parallel','same root, major and minor swap',[0,true],[0,false]],
+ N:['neighbour','two notes slip a semitone',[5,true],[7,false]],
+ S:['slide','keeps only the third; root slips a semitone',[1,true],[11,false]],
+ H:['pole','no shared key at all',[8,true],[4,false]]
+};
+let ctx=null,nodes=null,timers=[],state=null;
+const val=id=>parseFloat($(id).value);
+function rng(text){let h=1779033703^text.length;for(let i=0;i<text.length;i++){h=Math.imul(h^text.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+ let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function impulse(seconds){const n=Math.floor(ctx.sampleRate*seconds),b=ctx.createBuffer(2,n,ctx.sampleRate);
+ for(let c=0;c<2;c++){const d=b.getChannelData(c);let lp=0;for(let i=0;i<n;i++){const t=i/n;lp+=(Math.random()*2-1-lp)*(.5-.42*t);d[i]=lp*Math.pow(1-t,2.6);}}return b;}
+function noise(){const n=ctx.sampleRate*4,b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);let last=0;
+ for(let i=0;i<n;i++){last=(last+.02*(Math.random()*2-1))/1.02;d[i]=last*3.2;}const s=ctx.createBufferSource();s.buffer=b;s.loop=true;return s;}
+function build(){
+ const master=ctx.createGain();master.gain.value=0;
+ const comp=ctx.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;
+ const verb=ctx.createConvolver();verb.buffer=impulse(7);
+ const wet=ctx.createGain();wet.gain.value=.55;const dry=ctx.createGain();dry.gain.value=.5;
+ const bus=ctx.createGain();bus.connect(dry).connect(master);bus.connect(verb).connect(wet).connect(master);
+ master.connect(comp).connect(ctx.destination);
+ const tone=ctx.createBiquadFilter();tone.type='lowpass';tone.frequency.value=2000;tone.Q.value=.6;tone.connect(bus);
+ // two drawn waveforms: glass has only odd partials with the fifth and ninth strong; reed has every partial, peaking round the sixth
+ const wave=amps=>ctx.createPeriodicWave(new Float32Array(amps.length+1),new Float32Array([0,...amps]));
+ const glass=wave([1,0,.18,0,.5,0,.1,0,.3,0,.06,0,.12]),reed=wave([1,.45,.3,.28,.4,.55,.42,.2,.12,.08,.05,.04]);
+ const voices=[];
+ for(let i=0;i<5;i++){
+  const g=ctx.createGain();g.gain.value=.085;const pan=ctx.createStereoPanner();pan.pan.value=[-.7,-.35,0,.35,.7][i];
+  // five layers per voice, each a different waveform with its own level, so the blend can drift:
+  // saw pair (bright), triangle (soft), square (hollow), a glassy wave of odd partials, a reedy wave with a nasal peak,
+  // and a sine an octave up (air)
+  const spec=[['sawtooth',-7,'bright',.3],['sawtooth',6,'bright',.3],['triangle',0,'soft',.7],['square',3,'hollow',0],[glass,-4,'glass',0],[reed,5,'reed',0],['sine',1200,'air',0]];
+  const layers={};for(const name of['bright','soft','hollow','glass','reed','air']){layers[name]=ctx.createGain();layers[name].gain.value=0;}
+  const oscs=spec.map(([type,cents,to,level])=>{const o=ctx.createOscillator();if(typeof type==='string')o.type=type;else o.setPeriodicWave(type);o.detune.value=cents+i*1.5;o.frequency.value=110;o.connect(layers[to]);if(level)layers[to].gain.value=level;o.start();return o;});
+  // the voice's own filter, swept over more than two octaves by a very slow wave
+  const filt=ctx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=900;filt.Q.value=1.2;
+  const sweepL=ctx.createOscillator(),sweepG=ctx.createGain();sweepL.frequency.value=1/[47,61,83,107,131][i];sweepG.gain.value=1400;sweepL.connect(sweepG).connect(filt.detune);sweepL.start(0);
+  for(const name in layers)layers[name].connect(filt);filt.connect(g);
+  // each voice breathes at its own slow rate
+  const lfo=ctx.createOscillator(),depth=ctx.createGain();lfo.frequency.value=.031+.011*i;depth.gain.value=.03;lfo.connect(depth).connect(g.gain);lfo.start();
+  g.connect(pan).connect(tone);voices.push({oscs,g,midi:null,layers,filt,sweepG,pan});
+ }
+ const drone=[0,1].map(i=>{const o=ctx.createOscillator();o.type='sine';o.frequency.value=55;o.detune.value=i?9:-9;const g=ctx.createGain();g.gain.value=.16;o.connect(g).connect(bus);o.start();return o;});
+ const air=noise(),airF=ctx.createBiquadFilter();airF.type='bandpass';airF.frequency.value=320;airF.Q.value=.5;const airG=ctx.createGain();airG.gain.value=.03;air.connect(airF).connect(airG).connect(bus);air.start();
+ const sweep=ctx.createOscillator(),sweepD=ctx.createGain();sweep.frequency.value=1/173;sweepD.gain.value=350;sweep.connect(sweepD).connect(tone.frequency);sweep.start();
+ // an echo for the arpeggio: each note repeats, quieter, three steps later
+ const echo=ctx.createDelay(2),echoFb=ctx.createGain(),echoOut=ctx.createGain();echo.delayTime.value=.6;echoFb.gain.value=.42;echoOut.gain.value=.5;echo.connect(echoFb).connect(echo);echo.connect(echoOut).connect(bus);
+ // the heartbeat goes almost straight to the output, with only a little of the room
+ const heartDry=ctx.createGain();heartDry.gain.value=.9;heartDry.connect(master);const heartWet=ctx.createGain();heartWet.gain.value=.12;heartWet.connect(bus);
+ return{master,bus,tone,voices,drone,airG,airF,wet,sweepD,heartDry,heartWet,echo};
+}
+function pick(rand,u){
+ const w={R:1-.8*u,L:1-.6*u,P:.3+.5*u,N:.2+.6*u,S:1.0*u,H:1.4*u};
+ // do not undo the last move straight away: every move here is its own inverse
+ if(state.last)w[state.last]*=.15;
+ let total=0;for(const k in w)total+=w[k];let r=rand()*total;
+ for(const k in w){r-=w[k];if(r<=0)return k;}return 'R';
+}
+// Dressings: [suffix, intervals above the root]. A sus chord drops the third.
+const FLAVOURS={
+ major:[[' add9',[0,4,7,14],3],[' sus2',[0,2,7],2],[' sus4',[0,5,7],1.5],[' major 7',[0,4,7,11],2.5],[' 7',[0,4,7,10],1]],
+ minor:[[' minor add9',[0,3,7,14],3],[' minor 7',[0,3,7,10],3.5],[' sus2',[0,2,7],1.5],[' sus4',[0,5,7],2]]
+};
+function dress(chord,rand){
+ const plain=[chord.minor?' minor':' major',[0,chord.minor?3:4,7]];
+ if(rand()>=val('colour'))return plain;
+ const list=FLAVOURS[chord.minor?'minor':'major'];let r=rand()*list.reduce((a,f)=>a+f[2],0);
+ for(const f of list){r-=f[2];if(r<=0)return f;}return plain;
+}
+function voice(chord,u,rand){
+ const depth=val('depth'),centre=57-Math.round(depth*10),[suffix,steps]=dress(chord,rand);
+ const pcs=[...new Set(steps.map(i=>(chord.root+i)%12))];let clash='';
+ // unease may still add one note that does not belong
+ if(rand()<u*.3){const step=rand()<.6?1:6,pc=(chord.root+step)%12;if(!pcs.includes(pc)){pcs.push(pc);clash=step===1?'+ semitone clash':'+ tritone';}}
+ const pool=[];for(let m=centre-12;m<=centre+17;m++)if(pcs.includes(m%12))pool.push(m);
+ const near=(pc,m)=>pool.filter(x=>x%12===pc).reduce((a,b)=>Math.abs(b-m)<Math.abs(a-m)?b:a);
+ const prev=nodes.voices.map((v,i)=>v.midi??centre-9+i*5);
+ const out=prev.map(p=>pool.reduce((a,b)=>Math.abs(b-p)<Math.abs(a-p)?b:a));
+ // every chord note must sound: move the cheapest doubled voice onto any note left out
+ for(const pc of pcs)if(!out.some(m=>m%12===pc)){let best=-1,cost=1e9,target=0;
+  out.forEach((m,i)=>{if(out.filter(x=>x%12===m%12).length<2)return;const t=near(pc,m);if(Math.abs(t-m)<cost){cost=Math.abs(t-m);best=i;target=t;}});
+  if(best>=0)out[best]=target;}
+ return{notes:out,suffix,colour:clash,pcs};
+}
+function advance(rand,first){
+ if(!ctx)return;const u=val('unease'),now=ctx.currentTime;
+ let key=null;
+ if(!first){key=pick(rand,u);const m=MOVES[key][state.chord.minor?3:2];state.chord={root:(state.chord.root+m[0])%12,minor:m[1]};state.last=key;}
+ const v=voice(state.chord,u,rand),depth=val('depth');
+ v.notes.forEach((midi,i)=>{const vo=nodes.voices[i],at=now+(first?0:i*2.2+rand()*1.5);vo.midi=midi;vo.oscs.forEach(o=>o.frequency.setTargetAtTime(hz(midi),at,first?.05:1.4));});
+ // the drone holds a shared note when it can
+ const pcs=[state.chord.root,(state.chord.root+7)%12],base=34-Math.round(depth*7);state.pcs=v.pcs;
+ let dm=state.drone;if(dm==null||!pcs.includes(dm%12)){let m=base;while(!pcs.includes(m%12))m++;dm=m;}state.drone=dm;
+ nodes.drone.forEach(o=>o.frequency.setTargetAtTime(hz(dm),now+(first?0:3),first?.05:3));
+ nodes.tone.frequency.setTargetAtTime(2600-depth*1500,now,4);nodes.airG.gain.setTargetAtTime(.02+depth*.07,now,4);nodes.airF.frequency.setTargetAtTime(420-depth*240,now,4);
+ const name=NAMES[state.chord.root]+v.suffix;$('chord').textContent=name;
+ $('move').textContent=key?MOVES[key][0]+': '+MOVES[key][1]+(v.colour?'  '+v.colour:''):'starting chord'+(v.colour?'  '+v.colour:'');
+ const li=document.createElement('li');li.textContent=name+(key?'   by '+MOVES[key][0]:'   start')+(v.colour?'   '+v.colour:'');
+ const log=$('log');if(first)log.textContent='';log.prepend(li);while(log.children.length>10)log.lastChild.remove();
+ timers.push(setTimeout(()=>advance(rand,false),(14+rand()*12)*1000));
+}
+function bell(rand,period,octave){
+ if(!ctx)return;
+ if(rand()<.25+.7*val('density')){
+  const pcs=state.pcs||[state.chord.root],pc=pcs[Math.floor(rand()*pcs.length)];
+  let m=octave;while(m%12!==pc)m++;const t=ctx.currentTime+.05;
+  const car=ctx.createOscillator(),mod=ctx.createOscillator(),md=ctx.createGain(),g=ctx.createGain(),pan=ctx.createStereoPanner();
+  car.frequency.value=hz(m);mod.frequency.value=hz(m)*2.76;md.gain.setValueAtTime(hz(m)*.9,t);md.gain.exponentialRampToValueAtTime(1,t+2.5);
+  mod.connect(md).connect(car.frequency);pan.pan.value=rand()*1.6-.8;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.03);g.gain.exponentialRampToValueAtTime(.0004,t+7);
+  car.connect(g).connect(pan).connect(nodes.bus);car.start(t);mod.start(t);car.stop(t+7.2);mod.stop(t+7.2);
+ }
+ timers.push(setTimeout(()=>bell(rand,period,octave),period*1000));
+}
+// Every so often one voice is given new settings and glides to them; Drift scales how far.
+function wander(rand){
+ if(!ctx)return;const d=val('drift'),now=ctx.currentTime,v=nodes.voices[Math.floor(rand()*nodes.voices.length)],tc=6+rand()*5;
+ // a new blend of the waveforms: at no drift it is the saw and triangle pad; with drift any layer may lead
+ const want={bright:.3,soft:.7,hollow:0,glass:0,reed:0,air:0},names=Object.keys(want),lead=names[Math.floor(rand()*names.length)],second=names[Math.floor(rand()*names.length)];
+ const peak={bright:.5,soft:.9,hollow:.22,glass:.6,reed:.38,air:.3};
+ for(const n of names){const target=n===lead?peak[n]:n===second?peak[n]*.5:peak[n]*.08;want[n]=want[n]*(1-d)+target*d;}
+ for(const n of names)v.layers[n].gain.setTargetAtTime(want[n],now,tc);
+ state.blend=(state.blend||[]);state.blend[nodes.voices.indexOf(v)]=d<.05?'pad':lead+(second!==lead?'+'+second:'');$('blend').textContent=nodes.voices.map((_,i)=>state.blend[i]||'pad').join('  ·  ');
+ const spread=5+d*rand()*22;v.oscs[0].detune.setTargetAtTime(-spread,now,tc);v.oscs[1].detune.setTargetAtTime(spread*.9,now,tc);
+ v.pan.pan.setTargetAtTime((rand()*2-1)*(.3+.6*d),now,tc);
+ v.filt.frequency.setTargetAtTime(500*Math.pow(2,(rand()*2.4-.7)*(.3+d)),now,tc);v.filt.Q.setTargetAtTime(.8+rand()*5*d,now,tc);
+ v.sweepG.gain.setTargetAtTime(300+1800*d,now,tc);
+ nodes.wet.gain.setTargetAtTime(.45+rand()*.4*d,now,tc*2);nodes.sweepD.gain.setTargetAtTime(150+500*d,now,tc);
+ timers.push(setTimeout(()=>wander(rand),(6+rand()*7)*1000));
+}
+// One thump of the heart: a sine falling in pitch, with a short soft click of filtered attack.
+function thump(at,level,top){
+ const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';
+ o.frequency.setValueAtTime(top,at);o.frequency.exponentialRampToValueAtTime(42,at+.11);
+ g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(level,at+.006);g.gain.exponentialRampToValueAtTime(.0005,at+.34);
+ o.connect(g);g.connect(nodes.heartDry);g.connect(nodes.heartWet);o.start(at);o.stop(at+.4);
+}
+// A short plucked run through the current chord, in time with the pulse.
+function arpeggio(rand,first){
+ if(!ctx)return;const amount=val('arp');
+ if(amount>0&&state.pcs){
+  const beat=60/val('pulse'),per=rand()<.5?3:4,step=beat/per,count=per*(2+Math.floor(rand()*3)),shape=Math.floor(rand()*3);
+  // the chord's notes over two octaves, low to high
+  const base=64-Math.round(val('depth')*7),ladder=[];for(let m=base;m<base+25;m++)if(state.pcs.includes(m%12))ladder.push(m);
+  const start=Math.max(state.nextBeat||0,ctx.currentTime+.1);let at=start,i=Math.floor(rand()*3);
+  for(let n=0;n<count;n++){
+   const idx=shape===0?(i+n)%ladder.length:shape===1?(()=>{const span=ladder.length*2-2,k=(i+n)%span;return k<ladder.length?k:span-k;})():(i+n*2+(n%2?1:0))%ladder.length;
+   const env=Math.sin(Math.PI*(n+.5)/count),t=at+(rand()-.5)*.012;               // swell in and out
+   const o=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain(),pan=ctx.createStereoPanner();
+   o.type='triangle';o.frequency.value=hz(ladder[idx]);f.type='lowpass';f.Q.value=3;f.frequency.setValueAtTime(2600,t);f.frequency.exponentialRampToValueAtTime(500,t+.5);
+   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06*env+.008,t+.008);g.gain.exponentialRampToValueAtTime(.0004,t+.9);
+   pan.pan.value=Math.sin(n*.9)*.5;o.connect(f).connect(g).connect(pan);pan.connect(nodes.bus);pan.connect(nodes.echo);o.start(t);o.stop(t+1);at+=step;
+  }
+  nodes.echo.delayTime.setTargetAtTime(Math.min(1.4,step*3),ctx.currentTime,.05);
+  $('move').textContent+='   · arpeggio';
+ }
+ // wait for the next one: long and irregular
+ const wait=amount>0?(18+rand()*30)/(.25+amount*.9):20;
+ timers.push(setTimeout(()=>arpeggio(rand,false),(first?9+rand()*6:wait)*1000));
+}
+function heartbeat(rand){
+ if(!ctx)return;const bpm=val('pulse'),level=val('heart'),beat=60/bpm,at=Math.max(state.nextBeat,ctx.currentTime+.05);
+ if(level>0){thump(at,.9*level,95);thump(at+Math.min(.34,beat*.3),.62*level,78);}
+ // a real pulse is never perfectly even
+ state.nextBeat=at+beat*(1+(rand()-.5)*.06);
+ timers.push(setTimeout(()=>heartbeat(rand),Math.max(20,(state.nextBeat-ctx.currentTime-.12)*1000)));
+}
+function start(){
+ const AC=window.AudioContext||window.webkitAudioContext;if(!AC){$('move').textContent='This browser has no Web Audio.';return;}
+ ctx=new AC();nodes=build();const rand=rng($('seed').value.trim()||'facility');
+ state={chord:{root:Math.floor(rand()*12),minor:rand()<.7},last:null,drone:null};
+ advance(rand,true);const drift=rng(($('seed').value.trim()||'facility')+'/drift');timers.push(setTimeout(()=>wander(drift),3000));state.nextBeat=ctx.currentTime+4;timers.push(setTimeout(()=>arpeggio(rng(($('seed').value.trim()||'facility')+'/arp'),true),100));timers.push(setTimeout(()=>heartbeat(rng(($('seed').value.trim()||'facility')+'/heart')),3800));nodes.master.gain.setTargetAtTime(.8,ctx.currentTime,2.5);
+ [[17.3,72],[23.7,79],[31.1,67]].forEach(([p,o],i)=>timers.push(setTimeout(()=>bell(rand,p,o),(6+i*5)*1000)));
+ $('go').textContent='Stop';$('go').setAttribute('aria-pressed','true');
+}
+function stop(){
+ timers.forEach(clearTimeout);timers=[];const c=ctx,n=nodes;ctx=null;nodes=null;
+ if(c){n.master.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>c.close(),1800);}
+ $('go').textContent='Start';$('go').setAttribute('aria-pressed','false');$('chord').textContent='silent';$('move').textContent='press Start';$('blend').textContent='';
+}
+$('go').addEventListener('click',()=>ctx?stop():start());
+for(const id of['unease','colour','drift','depth','density','heart','arp'])$(id).addEventListener('input',()=>{$(id+'V').textContent=val(id).toFixed(2);});
+$('pulse').addEventListener('input',()=>{$('pulseV').textContent=val('pulse')+' bpm';});
+})();
+</script>
