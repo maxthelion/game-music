@@ -1,0 +1,11 @@
+{
+  "name": "game-music",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generative ambient music for games, made in the browser with Web Audio.",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist && mkdir -p dist && cp index.html dist/index.html"
+  }
+}
